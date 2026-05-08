@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Visualisasi interaktif algoritma Needleman-Wunsch untuk sequence alignment DNA. Tampilkan langkah-demi-langkah pengisian DP matrix dan traceback."
+    />
+    <meta name="theme-color" content="#0a0f1e" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:;"
+    />
+    <title>DNA Sequence Alignment — Needleman-Wunsch</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%230a0f1e'/><text y='46' x='8' font-size='42'>🧬</text></svg>"
+    />
+
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
+
+    <link rel="stylesheet" href="assets/style.css" />
+  </head>
+  <body>
+    <div class="page-header">
+      <div class="header-text">
+        <h1>🧬 DNA Sequence Alignment</h1>
+        <p>Algoritma Needleman-Wunsch — Interaktif</p>
+      </div>
+      <button
+        class="theme-toggle"
+        onclick="toggleTheme()"
+        aria-label="Ganti tema terang/gelap"
+      >
+        <span id="themeIcon">🌙</span>
+      </button>
+    </div>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+
+    <div
+      id="modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+    >
+      <div class="modal-box">
+        <h3 id="modal-title">⚠️ Reset Matriks?</h3>
+        <p>Semua progress pengisian sel akan dihapus. Yakin ingin reset?</p>
+        <div class="modal-btns">
+          <button
+            class="btn btn-s"
+            onclick="closeModal()"
+            aria-label="Batal reset"
+          >
+            Batal
+          </button>
+          <button
+            class="btn btn-p"
+            style="background: var(--red)"
+            onclick="confirmReset()"
+            aria-label="Konfirmasi reset"
+          >
+            Ya, Reset
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="bento">
+      <div class="bcard b-input">
+        <div class="bcard-label">Konfigurasi Sekuens & Skor</div>
+        <div class="presets">
+          <span class="preset-label">Preset:</span>
+          <button
+            class="preset-btn"
+            onclick="loadPreset('kelompok4')"
+            aria-label="Load preset Kelompok 4"
+          >
+            Kelompok 4
+          </button>
+          <button
+            class="preset-btn"
+            onclick="loadPreset('simple')"
+            aria-label="Load preset Simple"
+          >
+            Simple
+          </button>
+          <button
+            class="preset-btn"
+            onclick="loadPreset('gap')"
+            aria-label="Load preset Contoh Gap"
+          >
+            Contoh Gap
+          </button>
+          <button
+            class="preset-btn"
+            onclick="loadPreset('long')"
+            aria-label="Load preset Panjang"
+          >
+            Panjang
+          </button>
+        </div>
+        <div class="input-grid">
+          <div class="ig">
+            <label for="inSeqH">Sekuens A (horizontal)</label>
+            <input
+              id="inSeqH"
+              placeholder="contoh: ATCG"
+              aria-label="Sekuens A"
+              autocomplete="off"
+              spellcheck="false"
+              oninput="validateSeq(this, 'hintH')"
+            />
+            <div class="input-hint" id="hintH"></div>
+          </div>
+          <div class="ig">
+            <label for="inSeqV">Sekuens B (vertikal)</label>
+            <input
+              id="inSeqV"
+              placeholder="contoh: AGCG"
+              aria-label="Sekuens B"
+              autocomplete="off"
+              spellcheck="false"
+              oninput="validateSeq(this, 'hintV')"
+            />
+            <div class="input-hint" id="hintV"></div>
+          </div>
+        </div>
+        <div class="score-row">
+          <div class="si">
+            <div class="tip-wrap">
+              <label for="inMatch">Match</label>
+              <span class="tip-icon" tabindex="0">?</span>
+              <div class="tip-box">
+                Skor jika kedua basa sama<br />Biasanya bernilai positif (+1 s/d
+                +5)
+              </div>
+            </div>
+            <input
+              id="inMatch"
+              type="number"
+              aria-label="Skor Match"
+              value="2"
+            />
+          </div>
+          <div class="si">
+            <div class="tip-wrap">
+              <label for="inMis">Mismatch</label>
+              <span class="tip-icon" tabindex="0">?</span>
+              <div class="tip-box">
+                Penalti jika basa berbeda<br />Bisa positif, nol, atau negatif
+              </div>
+            </div>
+            <input
+              id="inMis"
+              type="number"
+              aria-label="Skor Mismatch"
+              value="-1"
+            />
+          </div>
+          <div class="si">
+            <div class="tip-wrap">
+              <label for="inGap">Gap</label>
+              <span class="tip-icon" tabindex="0">?</span>
+              <div class="tip-box">
+                Penalti untuk insersi/delesi<br />Biasanya bernilai negatif (-1
+                s/d -4)
+              </div>
+            </div>
+            <input id="inGap" type="number" aria-label="Skor Gap" value="-2" />
+          </div>
+          <button
+            class="btn-gen"
+            onclick="generate()"
+            aria-label="Generate alignment"
+          >
+            Generate ▶
+          </button>
+        </div>
+        <div class="err" id="errMsg" role="alert"></div>
+      </div>
+
+      <div id="dyn" style="display: contents"></div>
+    </div>
+
+    <script src="assets/script.js" defer></script>
+  </body>
+</html>
