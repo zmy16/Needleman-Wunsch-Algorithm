@@ -126,6 +126,24 @@ html[data-theme="light"] .preset-btn:hover {
   border-color: #4f46e5;
   color: #fff;
 }
+html[data-theme="light"] .algo-btn {
+  background: #e2e8f0;
+  color: #1e293b;
+  border-color: #cbd5e1;
+}
+html[data-theme="light"] .algo-btn:hover {
+  background: #7c3aed;
+  border-color: #7c3aed;
+  color: #fff;
+}
+html[data-theme="light"] .algo-btn.active {
+  background: #7c3aed;
+  border-color: #7c3aed;
+  color: #fff;
+}
+html[data-theme="light"] .algo-desc {
+  color: var(--sub);
+}
 
 html[data-theme="light"] .pc {
   background: #f8fafc;
@@ -604,6 +622,50 @@ body {
   flex-wrap: wrap;
   margin-bottom: 16px;
   align-items: center;
+}
+.algo-toggle {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  align-items: center;
+}
+.algo-btn {
+  background: var(--muted);
+  color: #cbd5e1;
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.15s;
+}
+.algo-btn:hover {
+  background: var(--purple);
+  border-color: var(--purple);
+  color: #fff;
+}
+.algo-btn.active {
+  background: var(--purple);
+  border-color: var(--purple);
+  color: #fff;
+  font-weight: 700;
+}
+.algo-desc {
+  font-size: 0.75rem;
+  color: var(--sub);
+  font-style: italic;
+  margin-left: 4px;
+}
+@media (max-width: 540px) {
+  .algo-toggle {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .algo-desc {
+    margin-left: 0;
+    margin-top: 4px;
+  }
 }
 .preset-label {
   font-size: 0.8rem;

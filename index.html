@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Visualisasi interaktif algoritma Needleman-Wunsch untuk sequence alignment DNA. Tampilkan langkah-demi-langkah pengisian DP matrix dan traceback."
+      content="Visualisasi interaktif algoritma Needleman-Wunsch (global) dan Smith-Waterman (local) untuk sequence alignment DNA. Tampilkan langkah-demi-langkah pengisian DP matrix dan traceback."
     />
     <meta name="theme-color" content="#0a0f1e" />
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:;"
     />
-    <title>DNA Sequence Alignment — Needleman-Wunsch</title>
+    <title>DNA Sequence Alignment — Needleman-Wunsch &amp; Smith-Waterman</title>
     <link
       rel="icon"
       type="image/svg+xml"
@@ -28,7 +28,7 @@
     <div class="page-header">
       <div class="header-text">
         <h1>🧬 DNA Sequence Alignment</h1>
-        <p>Algoritma Needleman-Wunsch — Interaktif</p>
+        <p id="headerSub">Algoritma Needleman-Wunsch — Interaktif</p>
       </div>
       <button
         class="theme-toggle"
@@ -103,6 +103,26 @@
           >
             Panjang
           </button>
+        </div>
+        <div class="algo-toggle">
+          <span class="preset-label">Algoritma:</span>
+          <button
+            class="algo-btn active"
+            id="algoNW"
+            onclick="selectAlgo('nw')"
+            aria-label="Pilih Needleman-Wunsch (Global)"
+          >
+            Needleman-Wunsch
+          </button>
+          <button
+            class="algo-btn"
+            id="algoSW"
+            onclick="selectAlgo('sw')"
+            aria-label="Pilih Smith-Waterman (Local)"
+          >
+            Smith-Waterman
+          </button>
+          <span class="algo-desc" id="algoDesc">Global Alignment</span>
         </div>
         <div class="input-grid">
           <div class="ig">

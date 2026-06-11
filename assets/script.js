@@ -102,7 +102,7 @@ function confirmReset() {
   _doReset();
 }
 
-let seqH, seqV, MATCH, MIS, GAP, rows, cols, matrix, steps, cur, tbPath;
+let seqH, seqV, MATCH, MIS, GAP, rows, cols, matrix, steps, cur, tbPath, ALGO;
 
 const $ = (id) => document.getElementById(id);
 const sign = (n) => (n >= 0 ? "+" + n : n);
@@ -118,6 +118,20 @@ function safeInt(id, fallback) {
   const v = parseInt(document.getElementById(id).value);
   return isNaN(v) ? fallback : v;
 }
+
+function selectAlgo(algo) {
+  ALGO = algo;
+  $("algoNW").classList.toggle("active", algo === "nw");
+  $("algoSW").classList.toggle("active", algo === "sw");
+  $("algoDesc").textContent = algo === "nw" ? "Global Alignment" : "Local Alignment";
+  $("headerSub").textContent = algo === "nw"
+    ? "Algoritma Needleman-Wunsch — Interaktif"
+    : "Algoritma Smith-Waterman — Interaktif";
+  document.title = algo === "nw"
+    ? "DNA Sequence Alignment — Needleman-Wunsch"
+    : "DNA Sequence Alignment — Smith-Waterman";
+}
+ALGO = "nw";
 
 function generate() {
   const err = $("errMsg");
@@ -156,33 +170,81 @@ function buildMatrix() {
     Array.from({ length: cols }, () => ({ d: 0, t: 0, l: 0, m: 0 })),
   );
   steps = [];
-  for (let j = 0; j < cols; j++) matrix[0][j].m = j * GAP;
-  for (let i = 1; i < rows; i++) matrix[i][0].m = i * GAP;
+
+  if (ALGO === "sw") {
+    // Smith-Waterman: first row and column stay 0
+    for (let j = 0; j < cols; j++) matrix[0][j].m = 0;
+    for (let i = 1; i < rows; i++) matrix[i][0].m = 0;
+  } else {
+    // Needleman-Wunsch: init with gap penalties
+    for (let j = 0; j < cols; j++) matrix[0][j].m = j * GAP;
+    for (let i = 1; i < rows; i++) matrix[i][0].m = i * GAP;
+  }
+
   for (let i = 1; i < rows; i++)
     for (let j = 1; j < cols; j++) {
       const s = seqV[i - 1] === seqH[j - 1] ? MATCH : MIS;
       const d = matrix[i - 1][j - 1].m + s,
         t = matrix[i - 1][j].m + GAP,
         l = matrix[i][j - 1].m + GAP;
-      const mx = Math.max(d, t, l);
+
+      let mx;
+      if (ALGO === "sw") {
+        // Smith-Waterman: clamp to 0
+        mx = Math.max(0, d, t, l);
+      } else {
+        // Needleman-Wunsch: standard max
+        mx = Math.max(d, t, l);
+      }
+
       matrix[i][j] = { d, t, l, m: mx };
       steps.push({ i, j, d, t, l, mx, s, cv: seqV[i - 1], ch: seqH[j - 1] });
     }
+
   tbPath = [];
-  let i = rows - 1,
-    j = cols - 1;
-  while (i > 0 || j > 0) {
-    tbPath.push([i, j]);
-    if (i > 0 && j > 0 && matrix[i][j].m === matrix[i][j].d) {
-      i--;
-      j--;
-    } else if (i > 0 && matrix[i][j].m === matrix[i][j].t) {
-      i--;
-    } else {
-      j--;
+
+  if (ALGO === "sw") {
+    // Smith-Waterman: find cell with max score
+    let maxScore = -Infinity;
+    let maxI = rows - 1, maxJ = cols - 1;
+    for (let i = 1; i < rows; i++)
+      for (let j = 1; j < cols; j++)
+        if (matrix[i][j].m > maxScore) {
+          maxScore = matrix[i][j].m;
+          maxI = i;
+          maxJ = j;
+        }
+
+    let i = maxI, j = maxJ;
+    while (i > 0 && j > 0 && matrix[i][j].m > 0) {
+      tbPath.push([i, j]);
+      if (matrix[i][j].m === matrix[i][j].d) {
+        i--;
+        j--;
+      } else if (matrix[i][j].m === matrix[i][j].t) {
+        i--;
+      } else {
+        j--;
+      }
     }
+    if (i > 0 && j > 0) tbPath.push([i, j]);
+    tbPath.reverse();
+  } else {
+    // Needleman-Wunsch: trace from bottom-right
+    let i = rows - 1, j = cols - 1;
+    while (i > 0 || j > 0) {
+      tbPath.push([i, j]);
+      if (i > 0 && j > 0 && matrix[i][j].m === matrix[i][j].d) {
+        i--;
+        j--;
+      } else if (i > 0 && matrix[i][j].m === matrix[i][j].t) {
+        i--;
+      } else {
+        j--;
+      }
+    }
+    tbPath.push([0, 0]);
   }
-  tbPath.push([0, 0]);
 }
 
 function renderUI() {
@@ -261,7 +323,7 @@ function renderUI() {
         <div>↖ = sel diagonal + match/mismatch</div>
         <div>↑ = sel atas + gap (${GAP})</div>
         <div>← = sel kiri + gap (${GAP})</div>
-        <div>★ = MAX dari ketiganya</div>
+        <div>★ = ${ALGO === "sw" ? "MAX(0, ketiganya) — clamp ke 0" : "MAX dari ketiganya"}</div>
       </div>
     </div>
 
@@ -322,7 +384,7 @@ function epDefault() {
       <div>↖ = sel diagonal + match/mismatch</div>
       <div>↑  = sel atas + gap (${GAP})</div>
       <div>← = sel kiri + gap (${GAP})</div>
-      <div>★ = MAX dari ketiganya</div>
+      <div>★ = ${ALGO === "sw" ? "MAX(0, ketiganya) — clamp ke 0" : "MAX dari ketiganya"}</div>
     </div>`;
 }
 function epStep(s) {
@@ -394,6 +456,17 @@ function setProgress(n, total) {
     n === 0 ? 'Klik "Langkah ▶" untuk mulai' : `Langkah ${n} dari ${total} sel`;
 }
 
+function getFinalScore() {
+  if (ALGO === "sw") {
+    let max = 0;
+    for (let i = 1; i < rows; i++)
+      for (let j = 1; j < cols; j++)
+        if (matrix[i][j].m > max) max = matrix[i][j].m;
+    return max;
+  }
+  return matrix[rows - 1][cols - 1].m;
+}
+
 function updateNavBtns() {
   const btnPrev = $("btnPrev");
   if (!btnPrev) return;
@@ -412,7 +485,7 @@ function doStep() {
   cur++;
   setProgress(cur, steps.length);
   if (cur === steps.length) {
-    $("fs").textContent = s.mx;
+    $("fs").textContent = getFinalScore();
     showToast(
       "✅ Semua sel terisi! Klik Traceback untuk melihat jalur optimal.",
     );
@@ -477,7 +550,7 @@ function doFill(silent) {
       highlightStep(last);
       epStep(last);
       setProgress(cur, steps.length);
-      $("fs").textContent = last.mx;
+      $("fs").textContent = getFinalScore();
       btn.classList.remove("loading");
       btn.textContent = "Isi Semua ⏩";
       updateNavBtns();
@@ -536,7 +609,7 @@ function doTrace() {
         }
         btn.classList.remove("loading");
         btn.textContent = "Isi Semua ⏩";
-        $("fs").textContent = steps[steps.length - 1].mx;
+        $("fs").textContent = getFinalScore();
         setProgress(cur, steps.length);
         updateNavBtns();
         _runTrace();
@@ -557,33 +630,59 @@ function _runTrace() {
   const aH = [],
     aV = [],
     mk = [];
-  let ti = rows - 1,
-    tj = cols - 1;
-  while (ti > 0 || tj > 0) {
-    if (ti > 0 && tj > 0 && matrix[ti][tj].m === matrix[ti][tj].d) {
-      aH.unshift(seqH[tj - 1]);
-      aV.unshift(seqV[ti - 1]);
-      mk.unshift(seqH[tj - 1] === seqV[ti - 1] ? "|" : ".");
-      ti--;
-      tj--;
-    } else if (ti > 0 && (tj === 0 || matrix[ti][tj].m === matrix[ti][tj].t)) {
-      aH.unshift("-");
-      aV.unshift(seqV[ti - 1]);
-      mk.unshift(" ");
-      ti--;
-    } else if (tj > 0) {
-      aH.unshift(seqH[tj - 1]);
-      aV.unshift("-");
-      mk.unshift(" ");
-      tj--;
-    } else {
-      break;
+
+  if (ALGO === "sw") {
+    // Smith-Waterman: trace forward along tbPath
+    for (let k = 1; k < tbPath.length; k++) {
+      const [pi, pj] = tbPath[k - 1];
+      const [ci, cj] = tbPath[k];
+      if (ci > pi && cj > pj) {
+        // diagonal
+        aH.push(seqH[cj - 1]);
+        aV.push(seqV[ci - 1]);
+        mk.push(seqH[cj - 1] === seqV[ci - 1] ? "|" : ".");
+      } else if (ci > pi) {
+        // up = gap in H
+        aH.push("-");
+        aV.push(seqV[ci - 1]);
+        mk.push(" ");
+      } else {
+        // left = gap in V
+        aH.push(seqH[cj - 1]);
+        aV.push("-");
+        mk.push(" ");
+      }
+    }
+  } else {
+    // Needleman-Wunsch: trace from bottom-right
+    let ti = rows - 1, tj = cols - 1;
+    while (ti > 0 || tj > 0) {
+      if (ti > 0 && tj > 0 && matrix[ti][tj].m === matrix[ti][tj].d) {
+        aH.unshift(seqH[tj - 1]);
+        aV.unshift(seqV[ti - 1]);
+        mk.unshift(seqH[tj - 1] === seqV[ti - 1] ? "|" : ".");
+        ti--;
+        tj--;
+      } else if (ti > 0 && (tj === 0 || matrix[ti][tj].m === matrix[ti][tj].t)) {
+        aH.unshift("-");
+        aV.unshift(seqV[ti - 1]);
+        mk.unshift(" ");
+        ti--;
+      } else if (tj > 0) {
+        aH.unshift(seqH[tj - 1]);
+        aV.unshift("-");
+        mk.unshift(" ");
+        tj--;
+      } else {
+        break;
+      }
     }
   }
   const mCnt = mk.filter((x) => x === "|").length,
     miCnt = mk.filter((x) => x === ".").length,
     gCnt = mk.filter((x) => x === " ").length;
-  const score = matrix[rows - 1][cols - 1].m;
+  const [scoreI, scoreJ] = ALGO === "sw" ? tbPath[tbPath.length - 1] : [rows - 1, cols - 1];
+  const score = matrix[scoreI][scoreJ].m;
 
   const charsA = aH
     .map(
@@ -626,7 +725,9 @@ function _runTrace() {
       <button class="btn btn-img" onclick="dlResultImg()">📷 Download Hasil (PNG)</button>
     </div>`;
   $("ep").innerHTML =
-    `<div class="bcard-label">Penjelasan Sel</div><h3>Traceback Path</h3><p style="font-size:0.8rem;color:var(--sub);line-height:1.6">Jalur <span style="color:#22c55e;font-weight:700">hijau</span> = traceback dari pojok kanan bawah → kiri atas.<br>Diagonal = match/mismatch &nbsp;|&nbsp; Atas = gap di A &nbsp;|&nbsp; Kiri = gap di B</p>`;
+    ALGO === "sw"
+      ? `<div class="bcard-label">Penjelasan Sel</div><h3>Traceback Path (Local)</h3><p style="font-size:0.8rem;color:var(--sub);line-height:1.6">Jalur <span style="color:#22c55e;font-weight:700">hijau</span> = traceback dari skor maksimum → berhenti saat skor = 0.<br>Diagonal = match/mismatch &nbsp;|&nbsp; Atas = gap di A &nbsp;|&nbsp; Kiri = gap di B</p>`
+      : `<div class="bcard-label">Penjelasan Sel</div><h3>Traceback Path (Global)</h3><p style="font-size:0.8rem;color:var(--sub);line-height:1.6">Jalur <span style="color:#22c55e;font-weight:700">hijau</span> = traceback dari pojok kanan bawah → kiri atas.<br>Diagonal = match/mismatch &nbsp;|&nbsp; Atas = gap di A &nbsp;|&nbsp; Kiri = gap di B</p>`;
   showToast("🔍 Traceback selesai! Lihat hasil alignment di bawah.");
 }
 
@@ -1034,7 +1135,7 @@ function dlMatrixExcel() {
   const merge = (r1, c1, r2, c2) =>
     merges.push(`${CL(c1)}${r1}:${CL(c2)}${r2}`);
 
-  add(R_TITLE, 1, "DP Matrix — Needleman-Wunsch", S.TITLE);
+  add(R_TITLE, 1, ALGO === "sw" ? "DP Matrix — Smith-Waterman" : "DP Matrix — Needleman-Wunsch", S.TITLE);
   merge(R_TITLE, 1, R_TITLE, totalCol);
 
   add(R_INFO1, 1, `SeqA (horizontal →): ${seqH.join(" ")}`, 9);
