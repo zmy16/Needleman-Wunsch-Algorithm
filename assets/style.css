@@ -809,7 +809,7 @@ html.theme-ready #matrix-capture {
 
 .btn-img {
   background: var(--blue);
-  color: #fff;
+  color: var(--bg);
   border-color: var(--blue);
 }
 
@@ -819,7 +819,7 @@ html.theme-ready #matrix-capture {
 
 .btn-xls {
   background: var(--yellow);
-  color: #fff;
+  color: var(--bg);
   font-weight: 700;
   border-color: var(--yellow);
 }
@@ -1117,7 +1117,7 @@ html.theme-ready #matrix-capture {
 }
 
 /* ── Explanation Section ─────────────────────────────────────── */
-.b-explain h3 {
+.b-explain h2 {
   font-family: var(--font-heading);
   color: var(--text);
   font-size: 1.1rem;
@@ -1150,7 +1150,7 @@ html.theme-ready #matrix-capture {
   overflow-x: auto;
 }
 
-.b-result h3 {
+.b-result h2 {
   font-family: var(--font-heading);
   color: var(--text);
   font-size: 1.1rem;

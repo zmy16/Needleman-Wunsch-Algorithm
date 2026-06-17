@@ -342,15 +342,15 @@ function renderUI() {
         </div>
       </div>
       <div class="dl-row">
-        <button class="btn btn-img" onclick="dlMatrixImg()" aria-label="Download matrix sebagai PNG">📷 Download Matrix (PNG)</button>
-        <button class="btn btn-xls" onclick="dlMatrixExcel()" aria-label="Download matrix sebagai Excel">📊 Download Matrix (Excel)</button>
+<button class="btn btn-img" onclick="dlMatrixImg()" aria-label="Download Matrix (PNG)">📷 Download Matrix (PNG)</button>
+<button class="btn btn-xls" onclick="dlMatrixExcel()" aria-label="Download Matrix (Excel)">📊 Download Matrix (Excel)</button>
       </div>
     </div>
 
     <!-- EXPLAIN -->
     <div class="bcard b-explain" id="ep">
       <div class="bcard-label">Penjelasan Sel</div>
-      <h3>Cara Membaca Setiap Sel</h3>
+      <h2>Cara Membaca Setiap Sel</h2>
       <p style="font-size:0.8rem;color:var(--sub);line-height:1.6">Setiap sel berisi 4 nilai: <span style="color:var(--green)">↖ Diagonal</span> | <span style="color:var(--red)">↑ Atas</span> | <span style="color:var(--yellow)">← Kiri</span> | <span style="color:var(--blue)">★ MAX</span></p>
       <div class="calc">
         <div>↖ = sel diagonal + match/mismatch</div>
@@ -407,7 +407,7 @@ function buildTable() {
 function epDefault() {
   $("ep").innerHTML = `
     <div class="bcard-label">Penjelasan Sel</div>
-    <h3>Cara Membaca Setiap Sel</h3>
+    <h2>Cara Membaca Setiap Sel</h2>
     <p style="font-size:0.85rem;color:var(--sub);line-height:1.6">Setiap sel berisi 4 nilai:
       <span style="color:var(--green)">↖ Diagonal</span> |
       <span style="color:var(--red)">↑ Atas</span> |
@@ -425,7 +425,7 @@ function epStep(s) {
     mc = isMatch ? "var(--green)" : "var(--yellow)";
   $("ep").innerHTML = `
     <div class="bcard-label">Penjelasan Sel</div>
-    <h3>Sel (${escapeHTML(s.cv)}, ${escapeHTML(s.ch)}) — Baris ${s.i}, Kolom ${s.j}</h3>
+    <h2>Sel (${escapeHTML(s.cv)}, ${escapeHTML(s.ch)}) — Baris ${s.i}, Kolom ${s.j}</h2>
     <p style="font-size:0.85rem;margin-bottom:6px"><span style="color:${mc}">${escapeHTML(s.cv)} vs ${escapeHTML(s.ch)} = ${isMatch ? "Match ✓" : "Mismatch ✗"} (${sign(s.s)})</span></p>
     <div class="calc">
       <div><span style="color:var(--green)">↖ Diagonal:</span> ${matrix[s.i - 1][s.j - 1].m} + (${sign(s.s)}) = <b>${s.d}</b></div>
@@ -777,7 +777,7 @@ function _runTrace() {
 
   const rp = $("rp");
   rp.classList.add("visible");
-  rp.innerHTML = `<div class="bcard-label">Hasil Alignment</div><h3>Hasil Alignment Optimal</h3>
+  rp.innerHTML = `<div class="bcard-label">Hasil Alignment</div><h2>Hasil Alignment Optimal</h2>
     <div style="display:flex;justify-content:center">
       <div class="align-block">
         <div class="align-row"><span class="align-lbl">A:</span><div class="align-chars">${charsA}</div></div>
@@ -798,8 +798,8 @@ function _runTrace() {
     </div>`;
   $("ep").innerHTML =
     ALGO === "sw"
-      ? `<div class="bcard-label">Penjelasan Sel</div><h3>Traceback Path (Local)</h3><p style="font-size:0.8rem;color:var(--sub);line-height:1.6">Jalur <span class="text-green" style="font-weight:700">hijau</span> = traceback dari skor maksimum → berhenti saat skor = 0.<br>Diagonal = match/mismatch &nbsp;|&nbsp; Atas = gap di A &nbsp;|&nbsp; Kiri = gap di B</p>`
-      : `<div class="bcard-label">Penjelasan Sel</div><h3>Traceback Path (Global)</h3><p style="font-size:0.8rem;color:var(--sub);line-height:1.6">Jalur <span class="text-green" style="font-weight:700">hijau</span> = traceback dari pojok kanan bawah → kiri atas.<br>Diagonal = match/mismatch &nbsp;|&nbsp; Atas = gap di A &nbsp;|&nbsp; Kiri = gap di B</p>`;
+? `<div class="bcard-label">Penjelasan Sel</div><h2>Traceback Path (Local)</h2><p style="font-size:0.8rem;color:var(--sub);line-height:1.6">Jalur <span class="text-green" style="font-weight:700">hijau</span> = traceback dari skor maksimum → berhenti saat skor = 0.<br>Diagonal = match/mismatch &nbsp;|&nbsp; Atas = gap di A &nbsp;|&nbsp; Kiri = gap di B</p>`
+  : `<div class="bcard-label">Penjelasan Sel</div><h2>Traceback Path (Global)</h2><p style="font-size:0.8rem;color:var(--sub);line-height:1.6">Jalur <span class="text-green" style="font-weight:700">hijau</span> = traceback dari pojok kanan bawah → kiri atas.<br>Diagonal = match/mismatch &nbsp;|&nbsp; Atas = gap di A &nbsp;|&nbsp; Kiri = gap di B</p>`;
   showToast("🔍 Traceback selesai! Lihat hasil alignment di bawah.");
 }
 
