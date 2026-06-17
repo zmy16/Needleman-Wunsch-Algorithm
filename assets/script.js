@@ -19,10 +19,10 @@ function applyTheme(theme, animate) {
   const meta = document.querySelector('meta[name="theme-color"]');
   if (theme === "light") {
     if (icon) icon.textContent = "☀️";
-    if (meta) meta.setAttribute("content", "#f1f5f9");
+    if (meta) meta.setAttribute("content", "#faf7f2");
   } else {
     if (icon) icon.textContent = "🌙";
-    if (meta) meta.setAttribute("content", "#0a0f1e");
+    if (meta) meta.setAttribute("content", "#0b1120");
   }
 }
 
@@ -92,10 +92,36 @@ function showToast(msg, duration = 2800) {
 }
 
 function openModal() {
-  $("modal-overlay").classList.add("open");
+  const overlay = $("modal-overlay");
+  overlay.classList.add("open");
+  overlay._prevFocus = document.activeElement;
+  const firstBtn = overlay.querySelector("button");
+  if (firstBtn) setTimeout(() => firstBtn.focus(), 50);
+  overlay._trapHandler = function (e) {
+    if (e.key !== "Tab") return;
+    const btns = overlay.querySelectorAll("button");
+    if (!btns.length) return;
+    const first = btns[0];
+    const last = btns[btns.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
+  overlay.addEventListener("keydown", overlay._trapHandler);
 }
 function closeModal() {
-  $("modal-overlay").classList.remove("open");
+  const overlay = $("modal-overlay");
+  overlay.classList.remove("open");
+  if (overlay._trapHandler) {
+    overlay.removeEventListener("keydown", overlay._trapHandler);
+    overlay._trapHandler = null;
+  }
+  // Restore focus to previously focused element
+  if (overlay._prevFocus) overlay._prevFocus.focus();
 }
 function confirmReset() {
   closeModal();
@@ -255,11 +281,11 @@ function renderUI() {
       <div class="seq-display">
         <div class="seq-box">
           <div class="seq-lbl">Sekuens A (horizontal)</div>
-          <div class="seq-letters">${seqH.map((c) => `<span>${escapeHTML(c)}</span>`).join("")}</div>
+          <div class="seq-letters">${seqH.map((c) => `<span class="nt-${c.toLowerCase()}">${escapeHTML(c)}</span>`).join("")}</div>
         </div>
         <div class="seq-box">
           <div class="seq-lbl">Sekuens B (vertikal)</div>
-          <div class="seq-letters">${seqV.map((c) => `<span>${escapeHTML(c)}</span>`).join("")}</div>
+          <div class="seq-letters">${seqV.map((c) => `<span class="nt-${c.toLowerCase()}">${escapeHTML(c)}</span>`).join("")}</div>
         </div>
       </div>
     </div>
@@ -294,6 +320,13 @@ function renderUI() {
         <div class="li"><div class="ld" style="background:var(--red)"></div>↑ Atas (gap)</div>
         <div class="li"><div class="ld" style="background:var(--yellow)"></div>← Kiri (gap)</div>
         <div class="li"><div class="ld" style="background:var(--blue)"></div>★ MAX</div>
+      </div>
+      <div class="legend nt-legend" style="margin-top:8px;">
+        <div class="li"><div class="ld" style="background:var(--nt-a)"></div>A</div>
+        <div class="li"><div class="ld" style="background:var(--nt-t)"></div>T</div>
+        <div class="li"><div class="ld" style="background:var(--nt-g)"></div>G</div>
+        <div class="li"><div class="ld" style="background:var(--nt-c)"></div>C</div>
+        <span class="shortcut-hint">Enter=step · F=fill · T=trace · Ctrl+Z=undo</span>
       </div>
     </div>
 
@@ -337,11 +370,11 @@ function buildTable() {
   const tbl = $("mt");
   tbl.innerHTML = "";
   const hr = document.createElement("tr");
-  hr.innerHTML = `<th class="corner"></th><th>-</th>${seqH.map((c) => `<th>${escapeHTML(c)}</th>`).join("")}`;
+  hr.innerHTML = `<th class="corner"></th><th>-</th>${seqH.map((c) => `<th class="nt-${c.toLowerCase()}">${escapeHTML(c)}</th>`).join("")}`;
   frag.appendChild(hr);
   for (let i = 0; i < rows; i++) {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<th>${i === 0 ? "-" : escapeHTML(seqV[i - 1])}</th>`;
+    tr.innerHTML = `<th${i > 0 ? ` class="nt-${seqV[i - 1].toLowerCase()}"` : ""}>${i === 0 ? "-" : escapeHTML(seqV[i - 1])}</th>`;
     for (let j = 0; j < cols; j++) {
       const td = document.createElement("td");
       td.id = `c${i}-${j}`;
@@ -441,7 +474,9 @@ function fillCell(s) {
   $(`d${s.i}-${s.j}`).textContent = s.d;
   $(`t${s.i}-${s.j}`).textContent = s.t;
   $(`l${s.i}-${s.j}`).textContent = s.l;
-  $(`m${s.i}-${s.j}`).textContent = s.mx;
+  const mEl = $(`m${s.i}-${s.j}`);
+  mEl.textContent = s.mx;
+  mEl.classList.add("cell-fill");
 }
 function clearCell(s) {
   $(`d${s.i}-${s.j}`).textContent = "";
@@ -572,12 +607,12 @@ function doReset() {
 }
 function _doReset() {
   cur = 0;
-  // Clear tracked highlights
   for (const el of _prevHighlighted) el.classList.remove("active", "src");
   _prevHighlighted = [];
   document
     .querySelectorAll(".traced")
     .forEach((e) => e.classList.remove("traced"));
+  document.querySelectorAll(".tb-arrow").forEach((e) => e.remove());
   $("fs").textContent = "—";
   setProgress(0, steps.length);
   $("rp").classList.remove("visible");
@@ -627,6 +662,20 @@ function _runTrace() {
   _prevHighlighted = [];
 
   for (const [i, j] of tbPath) $(`c${i}-${j}`).classList.add("traced");
+
+  for (let k = 1; k < tbPath.length; k++) {
+    const [pi, pj] = tbPath[k - 1];
+    const [ci, cj] = tbPath[k];
+    const el = $(`c${ci}-${cj}`);
+    if (!el) continue;
+    const arrow = document.createElement("div");
+    arrow.className = "tb-arrow";
+    if (ci > pi && cj > pj) arrow.textContent = "↖";
+    else if (ci > pi) arrow.textContent = "↑";
+    else arrow.textContent = "←";
+    el.appendChild(arrow);
+  }
+
   const aH = [],
     aV = [],
     mk = [];
@@ -681,13 +730,25 @@ function _runTrace() {
   const mCnt = mk.filter((x) => x === "|").length,
     miCnt = mk.filter((x) => x === ".").length,
     gCnt = mk.filter((x) => x === " ").length;
-  const [scoreI, scoreJ] = ALGO === "sw" ? tbPath[tbPath.length - 1] : [rows - 1, cols - 1];
+  const [scoreI, scoreJ] = ALGO === "sw" && tbPath.length > 0 ? tbPath[tbPath.length - 1] : [rows - 1, cols - 1];
   const score = matrix[scoreI][scoreJ].m;
+  const identity = mk.length > 0 ? ((mCnt / mk.length) * 100).toFixed(1) : "0.0";
 
+  if (ALGO === "sw" && score === 0) {
+    showToast("ℹ️ Smith-Waterman: Tidak ada alignment lokal dengan skor > 0. Coba ubah parameter scoring.");
+  }
+
+  const ntCls = (c) => {
+    if (c === "A") return " nt-a";
+    if (c === "T") return " nt-t";
+    if (c === "G") return " nt-g";
+    if (c === "C") return " nt-c";
+    return "";
+  };
   const charsA = aH
     .map(
       (c, k) =>
-        `<span class="${mk[k] === "|" ? "mc" : mk[k] === "." ? "mmc" : ""}">${escapeHTML(c)}</span>`,
+        `<span class="${mk[k] === "|" ? "mc" : mk[k] === "." ? "mmc" : ""}${c !== "-" ? ntCls(c) : ""}">${escapeHTML(c)}</span>`,
     )
     .join("");
   const charsMid = mk
@@ -699,7 +760,7 @@ function _runTrace() {
   const charsB = aV
     .map(
       (c, k) =>
-        `<span class="${mk[k] === "|" ? "mc" : mk[k] === "." ? "mmc" : ""}">${escapeHTML(c)}</span>`,
+        `<span class="${mk[k] === "|" ? "mc" : mk[k] === "." ? "mmc" : ""}${c !== "-" ? ntCls(c) : ""}">${escapeHTML(c)}</span>`,
     )
     .join("");
 
@@ -709,7 +770,10 @@ function _runTrace() {
     <span class="s-match">Match: ${mCnt}</span>
     <span class="s-mis">Mismatch: ${miCnt}</span>
     <span class="s-gap">Gap: ${gCnt}</span>
-    <span class="s-score">Skor: ${score}</span>`;
+    <span class="s-score">Skor: ${score}</span>
+    <span class="s-ident">Identitas: ${identity}%</span>`;
+
+  window._lastAlignment = { aH, aV, mk, score, identity, mCnt, miCnt, gCnt };
 
   const rp = $("rp");
   rp.classList.add("visible");
@@ -721,18 +785,65 @@ function _runTrace() {
         <div class="align-row"><span class="align-lbl">B:</span><div class="align-chars">${charsB}</div></div>
       </div>
     </div>
+    <div class="stats-row">
+      <div class="stat-chip match-c">${mCnt} match</div>
+      <div class="stat-chip mis-c">${miCnt} mismatch</div>
+      <div class="stat-chip gap-c">${gCnt} gap</div>
+      <div class="stat-chip score-c">Skor ${score}</div>
+      <div class="stat-chip ident-c">${identity}% identitas</div>
+    </div>
     <div class="dl-row">
-      <button class="btn btn-img" onclick="dlResultImg()">📷 Download Hasil (PNG)</button>
+      <button class="btn btn-img" onclick="dlResultImg()">📷 Download PNG</button>
+      <button class="btn btn-copy" onclick="copyAlignment()">📋 Copy Teks</button>
     </div>`;
   $("ep").innerHTML =
     ALGO === "sw"
-      ? `<div class="bcard-label">Penjelasan Sel</div><h3>Traceback Path (Local)</h3><p style="font-size:0.8rem;color:var(--sub);line-height:1.6">Jalur <span style="color:#22c55e;font-weight:700">hijau</span> = traceback dari skor maksimum → berhenti saat skor = 0.<br>Diagonal = match/mismatch &nbsp;|&nbsp; Atas = gap di A &nbsp;|&nbsp; Kiri = gap di B</p>`
-      : `<div class="bcard-label">Penjelasan Sel</div><h3>Traceback Path (Global)</h3><p style="font-size:0.8rem;color:var(--sub);line-height:1.6">Jalur <span style="color:#22c55e;font-weight:700">hijau</span> = traceback dari pojok kanan bawah → kiri atas.<br>Diagonal = match/mismatch &nbsp;|&nbsp; Atas = gap di A &nbsp;|&nbsp; Kiri = gap di B</p>`;
+      ? `<div class="bcard-label">Penjelasan Sel</div><h3>Traceback Path (Local)</h3><p style="font-size:0.8rem;color:var(--sub);line-height:1.6">Jalur <span class="text-green" style="font-weight:700">hijau</span> = traceback dari skor maksimum → berhenti saat skor = 0.<br>Diagonal = match/mismatch &nbsp;|&nbsp; Atas = gap di A &nbsp;|&nbsp; Kiri = gap di B</p>`
+      : `<div class="bcard-label">Penjelasan Sel</div><h3>Traceback Path (Global)</h3><p style="font-size:0.8rem;color:var(--sub);line-height:1.6">Jalur <span class="text-green" style="font-weight:700">hijau</span> = traceback dari pojok kanan bawah → kiri atas.<br>Diagonal = match/mismatch &nbsp;|&nbsp; Atas = gap di A &nbsp;|&nbsp; Kiri = gap di B</p>`;
   showToast("🔍 Traceback selesai! Lihat hasil alignment di bawah.");
+}
+
+function copyAlignment() {
+  const d = window._lastAlignment;
+  if (!d) return;
+  const lines = [
+    `A: ${d.aH.join(" ")}`,
+    `   ${d.mk.map((c) => (c === "|" ? "|" : c === "." ? "·" : " ")).join(" ")}`,
+    `B: ${d.aV.join(" ")}`,
+    ``,
+    `Skor: ${d.score} | Identitas: ${d.identity}% | Match: ${d.mCnt} | Mismatch: ${d.miCnt} | Gap: ${d.gCnt}`,
+    `Algoritma: ${ALGO === "nw" ? "Needleman-Wunsch (Global)" : "Smith-Waterman (Local)"}`,
+  ];
+  const text = lines.join("\n");
+  navigator.clipboard.writeText(text).then(
+    () => showToast("📋 Alignment berhasil disalin!"),
+    () => showToast("⚠️ Gagal menyalin — coba manual."),
+  );
 }
 
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeModal();
+  const tag = e.target.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA") return;
+  if (e.key === "Enter" && !e.shiftKey) {
+    const overlay = $("modal-overlay");
+    if (overlay && overlay.classList.contains("open")) return;
+    if ($("dyn").children.length === 0) {
+      generate();
+    } else if ($("btnStep") && !$("btnStep").disabled) {
+      doStep();
+    }
+  }
+  if (e.key === "f" || e.key === "F") {
+    if ($("btnFill") && !$("btnFill").disabled) doFillBtn();
+  }
+  if (e.key === "t" || e.key === "T") {
+    if ($("btnTrace")) doTrace();
+  }
+  if (e.key === "z" && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
+    doPrev();
+  }
 });
 
 // Lazy load html2canvas — only when needed (not render-blocking)
@@ -778,6 +889,8 @@ function triggerDl(canvas, name) {
 }
 
 async function dlMatrixImg() {
+  const btn = document.querySelector('.btn-img[onclick="dlMatrixImg()"]');
+  if (btn) btn.classList.add("loading");
   if (cur < steps.length) {
     while (cur < steps.length) {
       fillCell(steps[cur]);
@@ -795,15 +908,19 @@ async function dlMatrixImg() {
     document.documentElement.getAttribute("data-theme") === "light";
   try {
     triggerDl(
-      await capture($("matrix-capture"), isLight ? "#ffffff" : "#161f30"),
+      await capture($("matrix-capture"), isLight ? "#ffffff" : "#152035"),
       "dp_matrix.png",
     );
   } catch (e) {
     showToast("⚠️ Gagal memuat library screenshot. Coba lagi.");
+  } finally {
+    if (btn) btn.classList.remove("loading");
   }
 }
 
 async function dlResultImg() {
+  const btn = document.querySelector('.btn-img[onclick="dlResultImg()"]');
+  if (btn) btn.classList.add("loading");
   const el = $("rp");
   const clone = el.cloneNode(true);
   const dlr = clone.querySelector(".dl-row");
@@ -820,11 +937,13 @@ async function dlResultImg() {
     document.documentElement.getAttribute("data-theme") === "light";
   try {
     triggerDl(
-      await capture(clone, isLight ? "#ffffff" : "#161f30"),
+      await capture(clone, isLight ? "#ffffff" : "#152035"),
       "alignment_result.png",
     );
   } catch (e) {
     showToast("⚠️ Gagal memuat library screenshot. Coba lagi.");
+  } finally {
+    if (btn) btn.classList.remove("loading");
   }
   document.body.removeChild(clone);
 }
@@ -844,7 +963,9 @@ function buildStyledXLSX(sheetName, cells, merges, colWidths) {
     String(s)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&apos;");
   const ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
   const pns = "http://schemas.openxmlformats.org/package/2006/relationships";
   const rns =
@@ -969,11 +1090,12 @@ function makeZip(files) {
   const enc = new TextEncoder();
   const crc32 = (d) => {
     let c = 0xffffffff;
-    const t = new Uint8Array(256).map((_, i) => {
+    const t = new Uint32Array(256);
+    for (let i = 0; i < 256; i++) {
       let v = i;
       for (let j = 0; j < 8; j++) v = v & 1 ? 0xedb88320 ^ (v >>> 1) : v >>> 1;
-      return v;
-    });
+      t[i] = v;
+    }
     for (const b of d) c = t[(c ^ b) & 0xff] ^ (c >>> 8);
     return (c ^ 0xffffffff) >>> 0;
   };

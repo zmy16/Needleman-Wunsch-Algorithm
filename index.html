@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="id">
+<html lang="id" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,20 +7,23 @@
       name="description"
       content="Visualisasi interaktif algoritma Needleman-Wunsch (global) dan Smith-Waterman (local) untuk sequence alignment DNA. Tampilkan langkah-demi-langkah pengisian DP matrix dan traceback."
     />
-    <meta name="theme-color" content="#0a0f1e" />
+    <meta name="theme-color" content="#0b1120" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:;"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:;"
     />
     <title>DNA Sequence Alignment — Needleman-Wunsch &amp; Smith-Waterman</title>
     <link
       rel="icon"
       type="image/svg+xml"
-      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%230a0f1e'/><text y='46' x='8' font-size='42'>🧬</text></svg>"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%230b1120'/><text y='46' x='8' font-size='42'>🧬</text></svg>"
     />
 
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
     <link rel="stylesheet" href="assets/style.css" />
   </head>
@@ -135,7 +138,7 @@
               spellcheck="false"
               oninput="validateSeq(this, 'hintH')"
             />
-            <div class="input-hint" id="hintH"></div>
+            <div class="input-hint" id="hintH" aria-live="polite"></div>
           </div>
           <div class="ig">
             <label for="inSeqV">Sekuens B (vertikal)</label>
@@ -147,7 +150,7 @@
               spellcheck="false"
               oninput="validateSeq(this, 'hintV')"
             />
-            <div class="input-hint" id="hintV"></div>
+            <div class="input-hint" id="hintV" aria-live="polite"></div>
           </div>
         </div>
         <div class="score-row">
@@ -165,6 +168,8 @@
               type="number"
               aria-label="Skor Match"
               value="2"
+              inputmode="numeric"
+              step="1"
             />
           </div>
           <div class="si">
@@ -180,6 +185,8 @@
               type="number"
               aria-label="Skor Mismatch"
               value="-1"
+              inputmode="numeric"
+              step="1"
             />
           </div>
           <div class="si">
@@ -191,7 +198,7 @@
                 s/d -4)
               </div>
             </div>
-            <input id="inGap" type="number" aria-label="Skor Gap" value="-2" />
+            <input id="inGap" type="number" aria-label="Skor Gap" value="-2" inputmode="numeric" step="1" />
           </div>
           <button
             class="btn-gen"
@@ -207,6 +214,14 @@
       <div id="dyn" style="display: contents"></div>
     </div>
 
+    <noscript>
+      <style>
+        body { background: #0b1120; color: #e4eaf4; padding: 40px; font-family: monospace; text-align: center; }
+        .page-header, .bento, #toast, #modal-overlay { display: none !important; }
+      </style>
+      <h1>JavaScript Required</h1>
+      <p>Aplikasi ini membutuhkan JavaScript untuk berjalan. Aktifkan JavaScript di browser Anda.</p>
+    </noscript>
     <script src="assets/script.js" defer></script>
   </body>
 </html>
