@@ -976,6 +976,8 @@ html.theme-ready #matrix-capture {
   padding: 0;
   border: 1px solid var(--border);
   position: relative;
+  min-width: 96px;
+  min-height: 76px;
 }
 
 .cell-4 .inner {
@@ -984,8 +986,8 @@ html.theme-ready #matrix-capture {
   grid-template-rows: 1fr 1fr;
   gap: 1px;
   background: var(--border);
-  width: 96px;
-  height: 76px;
+  width: 100%;
+  height: 100%;
 }
 
 .cell-4 .inner div {
@@ -1051,11 +1053,25 @@ html.theme-ready #matrix-capture {
   box-shadow: inset 0 0 8px rgba(52, 211, 153, 0.15);
 }
 
+.traced .dg,
+.traced .tp,
+.traced .lt,
+.traced .mx {
+  background: rgba(52, 211, 153, 0.15);
+}
+
 .active .tb-ring {
   display: block;
   border: 2.5px solid var(--yellow);
   background: rgba(251, 191, 36, 0.06);
   box-shadow: inset 0 0 8px rgba(251, 191, 36, 0.15);
+}
+
+.active .dg,
+.active .tp,
+.active .lt,
+.active .mx {
+  background: rgba(251, 191, 36, 0.15);
 }
 
 .init-cell {
@@ -1532,9 +1548,9 @@ textarea:focus-visible {
 
 /* ── Responsive: Tablet ──────────────────────────────────────── */
 @media (max-width: 900px) {
-  .cell-4 .inner {
-    width: 82px;
-    height: 66px;
+  .cell-4 {
+    min-width: 82px;
+    min-height: 66px;
   }
   .cell-4 .inner div {
     font-size: 0.74rem;
@@ -1565,9 +1581,9 @@ textarea:focus-visible {
   .input-grid {
     grid-template-columns: 1fr;
   }
-  .cell-4 .inner {
-    width: 66px;
-    height: 54px;
+  .cell-4 {
+    min-width: 66px;
+    min-height: 54px;
   }
   .cell-4 .inner div {
     font-size: 0.64rem;
@@ -1612,9 +1628,9 @@ textarea:focus-visible {
   .bcard {
     padding: 14px;
   }
-  .cell-4 .inner {
-    width: 52px;
-    height: 42px;
+  .cell-4 {
+    min-width: 52px;
+    min-height: 42px;
   }
   .cell-4 .inner div {
     font-size: 0.54rem;
