@@ -997,24 +997,20 @@ html.theme-ready #matrix-capture {
 
 .dg {
   color: var(--cell-dg-fg);
-  background: var(--cell-dg-bg);
 }
 
 .tp {
   color: var(--cell-tp-fg);
-  background: var(--cell-tp-bg);
 }
 
 .lt {
   color: var(--cell-lt-fg);
-  background: var(--cell-lt-bg);
 }
 
 .mx {
   color: var(--cell-mx-fg);
   font-weight: 800;
   font-size: 0.9rem;
-  background: var(--cell-mx-bg);
   letter-spacing: 0.5px;
 }
 
