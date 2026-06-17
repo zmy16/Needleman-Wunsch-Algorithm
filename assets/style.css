@@ -986,8 +986,8 @@ html.theme-ready #matrix-capture {
   grid-template-rows: 1fr 1fr;
   gap: 1px;
   background: var(--border);
-  position: absolute;
-  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .cell-4 .inner div {
